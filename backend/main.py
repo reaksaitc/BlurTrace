@@ -12,6 +12,7 @@ these are intentional scope decisions for this student case study, not bugs.
 """
 
 import base64
+from pathlib import Path
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -194,6 +195,8 @@ async def find_original(request: Request):
 
 # Serve the frontend as static files (index.html, style.css, app.js) directly from FastAPI.
 # This mount must come AFTER the /api/* routes above, so it doesn't shadow them.
-# check_dir=False so the backend can still run standalone before the frontend folder exists
-# (e.g. while testing endpoints via /docs). Once frontend/ exists, requests to "/" will serve it.
-app.mount("/", StaticFiles(directory="../frontend", html=True, check_dir=False), name="frontend")
+# The path is resolved relative to THIS file (not the process's working directory),
+# so it works the same whether run locally, via VS Code, or on a host like Render
+# that may launch uvicorn from a different working directory.
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True, check_dir=False), name="frontend")
