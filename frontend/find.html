@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1200" />
+<title>Find the Original — BlurTrace</title>
+<link rel="stylesheet" href="style.css" />
+<style>
+  .find-body {
+    flex: 1;
+    padding: 40px 0 60px;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  .page-header h1 {
+    font-size: 30px;
+    font-weight: 700;
+    margin: 0 0 10px;
+  }
+
+  .page-header p {
+    color: var(--text-secondary);
+    font-size: 15px;
+    margin: 0;
+  }
+
+  .find-layout {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 26px;
+    min-height: 380px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel .panel-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+  }
+
+  /* Left panel — dropzone */
+  .dropzone {
+    flex: 1;
+    border: 1.5px dashed var(--border-strong);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    padding: 24px;
+  }
+
+  .dropzone.dragover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .dropzone .icon-circle svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+  }
+
+  .dropzone .icon-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 14px;
+  }
+
+  .dropzone h3 {
+    margin: 0 0 6px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .dropzone p {
+    margin: 0 0 18px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  .dropzone img.preview-thumb {
+    max-width: 100%;
+    max-height: 220px;
+    border-radius: 8px;
+    object-fit: contain;
+  }
+
+  #file-input { display: none; }
+
+  /* Center — Find button */
+  .find-btn-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #find-btn {
+    padding: 16px 34px;
+  }
+
+  /* Right panel — result */
+  .result-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .result-body .icon-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 14px;
+  }
+
+  .result-body h3 {
+    margin: 0 0 6px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .result-body p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 13px;
+    max-width: 260px;
+  }
+
+  .result-body.found .icon-circle {
+    background: rgba(52, 211, 153, 0.12);
+    color: var(--success);
+  }
+
+  .result-body.not-found .icon-circle {
+    background: rgba(248, 113, 113, 0.12);
+    color: var(--danger);
+  }
+
+  .result-body img.result-img {
+    max-width: 100%;
+    max-height: 220px;
+    border-radius: 8px;
+    object-fit: contain;
+    margin-bottom: 16px;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .back-link:hover { color: var(--text-primary); }
+</style>
+</head>
+<body>
+  <div class="page">
+    <nav class="navbar">
+      <div class="logo">
+        <span class="logo-dot">B</span>
+        BlurTrace
+      </div>
+      <a href="index.html" class="nav-center back-link">← Back to Home</a>
+      <div class="nav-spacer"></div>
+    </nav>
+
+    <div class="find-body">
+      <div class="container">
+        <div class="page-header">
+          <h1>Find the Original</h1>
+          <p>Upload a blurred image to check if the original is stored in our system.</p>
+        </div>
+
+        <div class="find-layout">
+          <div class="panel">
+            <div class="panel-label">Blurred Image</div>
+            <div id="dropzone" class="dropzone">
+              <div id="dropzone-empty">
+                <div class="icon-circle">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 19V5M12 5L6 11M12 5L18 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+                <h3>Drag &amp; drop here</h3>
+                <p>Supports JPG, PNG, WEBP — or paste with Ctrl+V</p>
+                <button type="button" class="btn btn-primary" id="browse-btn">Select from Computer</button>
+              </div>
+              <img id="preview-thumb" class="preview-thumb" style="display:none;" />
+            </div>
+            <input type="file" id="file-input" accept="image/*" />
+          </div>
+
+          <div class="find-btn-wrap">
+            <button type="button" class="btn btn-primary" id="find-btn" disabled>Find Original →</button>
+          </div>
+
+          <div class="panel">
+            <div class="panel-label">Result</div>
+            <div class="result-body" id="result-body">
+              <div class="icon-circle">◎</div>
+              <h3>No result yet</h3>
+              <p>Upload an image and click Find to see if a match exists.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const dropzone = document.getElementById('dropzone');
+      const dropzoneEmpty = document.getElementById('dropzone-empty');
+      const previewThumb = document.getElementById('preview-thumb');
+      const fileInput = document.getElementById('file-input');
+      const browseBtn = document.getElementById('browse-btn');
+      const findBtn = document.getElementById('find-btn');
+      const resultBody = document.getElementById('result-body');
+
+      let selectedFile = null;
+
+      function setSelectedFile(blob) {
+        if (!blob || !blob.type.startsWith('image/')) return;
+        selectedFile = blob;
+        const url = URL.createObjectURL(blob);
+        previewThumb.src = url;
+        previewThumb.style.display = 'block';
+        dropzoneEmpty.style.display = 'none';
+        findBtn.disabled = false;
+        resetResult();
+      }
+
+      function resetResult() {
+        resultBody.className = 'result-body';
+        resultBody.innerHTML = `
+          <div class="icon-circle">◎</div>
+          <h3>No result yet</h3>
+          <p>Upload an image and click Find to see if a match exists.</p>
+        `;
+      }
+
+      browseBtn.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
+      fileInput.addEventListener('change', (e) => setSelectedFile(e.target.files[0]));
+
+      dropzone.addEventListener('click', () => fileInput.click());
+      dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+      dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) setSelectedFile(e.dataTransfer.files[0]);
+      });
+
+      document.addEventListener('paste', (e) => {
+        const items = e.clipboardData && e.clipboardData.items;
+        if (!items) return;
+        for (const item of items) {
+          if (item.type.startsWith('image/')) {
+            const blob = item.getAsFile();
+            if (blob) { setSelectedFile(blob); break; }
+          }
+        }
+      });
+
+      findBtn.addEventListener('click', async () => {
+        if (!selectedFile) return;
+        findBtn.disabled = true;
+        findBtn.textContent = 'Searching…';
+
+        const form = new FormData();
+        form.append('file', selectedFile, selectedFile.name || 'blurred.png');
+
+        try {
+          const res = await fetch('/api/find', { method: 'POST', body: form });
+
+          if (res.status === 404) {
+            resultBody.className = 'result-body not-found';
+            resultBody.innerHTML = `
+              <div class="icon-circle">✕</div>
+              <h3>No matching original found</h3>
+              <p>This image doesn't match anything stored in our system.</p>
+            `;
+            return;
+          }
+
+          if (!res.ok) {
+            const err = await res.json().catch(() => null);
+            throw new Error(err?.detail || `Server returned ${res.status}`);
+          }
+
+          const data = await res.json();
+          resultBody.className = 'result-body found';
+          resultBody.innerHTML = `
+            <img class="result-img" src="data:image/png;base64,${data.original_image_base64}" alt="Original" />
+            <h3>Original found</h3>
+            <p style="margin-bottom:16px;">Matched a pair stored via ${data.blur_method || 'unknown method'}.</p>
+          `;
+          const dlBtn = document.createElement('button');
+          dlBtn.className = 'btn btn-primary';
+          dlBtn.textContent = 'Save Image';
+          dlBtn.onclick = () => {
+            const link = document.createElement('a');
+            link.href = `data:image/png;base64,${data.original_image_base64}`;
+            link.download = 'original_' + data.image_id.slice(0, 8) + '.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          };
+          resultBody.appendChild(dlBtn);
+        } catch (err) {
+          resultBody.className = 'result-body not-found';
+          resultBody.innerHTML = `
+            <div class="icon-circle">✕</div>
+            <h3>Something went wrong</h3>
+            <p>${err.message || 'Could not reach the server.'}</p>
+          `;
+        } finally {
+          findBtn.disabled = false;
+          findBtn.textContent = 'Find Original →';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

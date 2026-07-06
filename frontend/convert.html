@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1200" />
+<title>Convert to Blur — BlurTrace</title>
+<link rel="stylesheet" href="style.css" />
+<style>
+  .convert-body {
+    flex: 1;
+    padding: 40px 0 60px;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  .page-header h1 {
+    font-size: 30px;
+    font-weight: 700;
+    margin: 0 0 10px;
+  }
+
+  .page-header p {
+    color: var(--text-secondary);
+    font-size: 15px;
+    margin: 0;
+  }
+
+  /* Upload dropzone */
+  .dropzone {
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius-card);
+    padding: 44px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    margin-bottom: 28px;
+  }
+
+  .dropzone.dragover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .dropzone .icon-circle svg {
+    width: 22px;
+    height: 22px;
+    display: block;
+  }
+
+  .dropzone .icon-circle {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+  }
+
+  .dropzone h3 {
+    margin: 0 0 6px;
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  .dropzone p {
+    margin: 0 0 20px;
+    color: var(--text-muted);
+    font-size: 13.5px;
+  }
+
+  #file-input { display: none; }
+
+  /* Two-column workspace: file list | main panel */
+  .workspace {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .file-list-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 18px;
+  }
+
+  .file-list-card .label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    padding: 0 4px;
+  }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-bottom: 6px;
+    transition: background 0.15s ease;
+  }
+
+  .file-item:hover {
+    background: var(--bg-card-hover);
+  }
+
+  .file-item.active {
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+  }
+
+  .file-item .thumb {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #222642;
+    flex-shrink: 0;
+  }
+
+  .file-item .meta {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .file-item .fname {
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .file-item .fsize {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .file-item .del {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 15px;
+    padding: 4px;
+  }
+
+  .file-item .del:hover { color: var(--danger); }
+
+  .empty-hint {
+    color: var(--text-muted);
+    font-size: 12.5px;
+    padding: 8px 4px;
+  }
+
+  /* Main panel */
+  .main-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 28px;
+  }
+
+  .boards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 26px;
+  }
+
+  .board {
+    background: #0d1024;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .board .board-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .board .board-body {
+    height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .board .board-body img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 6px;
+    object-fit: contain;
+  }
+
+  .board .placeholder {
+    color: var(--text-muted);
+    font-size: 13px;
+    text-align: center;
+  }
+
+  /* Method + intensity */
+  .section-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+  }
+
+  .method-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 26px;
+  }
+
+  .method-btn {
+    flex: 1;
+    padding: 13px 20px;
+    border-radius: var(--radius-pill);
+    border: 1.5px solid var(--border-strong);
+    background: transparent;
+    color: var(--text-primary);
+    font-family: 'Poppins', sans-serif;
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .method-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .method-btn.selected {
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    border-color: transparent;
+    color: white;
+  }
+
+  .intensity-row {
+    margin-bottom: 30px;
+  }
+
+  .intensity-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .intensity-header .level {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 13.5px;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .intensity-scale {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  .actions-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .status-msg {
+    font-size: 13px;
+    margin-left: 4px;
+  }
+
+  .status-msg.success { color: var(--success); }
+  .status-msg.error { color: var(--danger); }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .back-link:hover { color: var(--text-primary); }
+</style>
+</head>
+<body>
+  <div class="page">
+    <nav class="navbar">
+      <div class="logo">
+        <span class="logo-dot">B</span>
+        BlurTrace
+      </div>
+      <a href="index.html" class="nav-center back-link">← Back to Home</a>
+      <div class="nav-spacer"></div>
+    </nav>
+
+    <div class="convert-body">
+      <div class="container">
+        <div class="page-header">
+          <h1>Convert to Blur</h1>
+          <p>Upload an image, choose how it should be blurred, and save the result.</p>
+        </div>
+
+        <div id="dropzone" class="dropzone">
+          <div class="icon-circle">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 19V5M12 5L6 11M12 5L18 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h3>Drag &amp; drop an image here</h3>
+          <p>or click to browse — you can also paste an image with Ctrl+V</p>
+          <button type="button" class="btn btn-primary" id="browse-btn">Browse Files</button>
+          <input type="file" id="file-input" accept="image/*" multiple />
+        </div>
+
+        <div class="workspace">
+          <div class="file-list-card">
+            <div class="label">Current Session</div>
+            <div id="file-list"></div>
+            <div id="empty-hint" class="empty-hint">No images uploaded yet.</div>
+          </div>
+
+          <div class="main-panel">
+            <div class="boards">
+              <div class="board">
+                <div class="board-label">Original</div>
+                <div class="board-body" id="original-board">
+                  <div class="placeholder">Upload an image to see it here</div>
+                </div>
+              </div>
+              <div class="board">
+                <div class="board-label">Blurred Preview</div>
+                <div class="board-body" id="blurred-board">
+                  <div class="placeholder">Choose a method to generate a preview</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-label">Blur Method</div>
+            <div class="method-row">
+              <button type="button" class="method-btn" id="btn-gaussian" disabled>Gaussian Blur</button>
+              <button type="button" class="method-btn" id="btn-pixelate" disabled>Pixelation</button>
+            </div>
+
+            <div class="intensity-row">
+              <div class="intensity-header">
+                <span class="section-label" style="margin:0;">Intensity</span>
+                <span class="level" id="intensity-level">Level 5</span>
+              </div>
+              <input type="range" id="intensity-slider" min="1" max="10" value="5" disabled />
+              <div class="intensity-scale"><span>Low</span><span>Max</span></div>
+            </div>
+
+            <div class="actions-row">
+              <button type="button" class="btn btn-secondary" id="btn-copy" disabled>Copy to Clipboard</button>
+              <button type="button" class="btn btn-primary" id="btn-save" disabled>Save Image</button>
+              <span class="status-msg" id="status-msg"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
