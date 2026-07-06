@@ -1,0 +1,15 @@
+# Environment variables (contains real DB password — never commit this)
+backend/.env
+
+# Python virtual environment
+venv3/
+__pycache__/
+*.pyc
+
+# OS/editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Optional: local test artifacts if you create any
+*.log
