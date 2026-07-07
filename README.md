@@ -2,6 +2,9 @@
 
 **A traceable image-blurring system — student case study.**
 
+🔗 **Live Demo:** [https://blurtrace.onrender.com/](https://blurtrace.onrender.com/)
+> Hosted on Render's free tier — the first load after inactivity may take 30-60 seconds to wake up. This is expected.
+
 BlurTrace lets you blur a sensitive image before sharing it, while keeping a secure, database-backed way to trace that blurred image back to its original source later, if it's ever needed.
 
 > Local demo project for a Data Science case study. Not intended for real sensitive images, and not a production system — see [Scope & Limitations](#scope--limitations) below.
