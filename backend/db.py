@@ -27,37 +27,49 @@ print(f"[db.py] Looking for .env at: {ENV_PATH}")
 print(f"[db.py] .env file exists on disk: {ENV_PATH.exists()}")
 print(f"[db.py] python-dotenv reports loaded: {_loaded}")
 
+DATABASE_URL = os.getenv("DATABASE_URL")  # Neon (and most hosts) provide one full connection string
+
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_SSLMODE = os.getenv("DB_SSLMODE")  # Neon requires "require"; leave unset for local Postgres
 
+print(f"[db.py] DATABASE_URL={'<set>' if DATABASE_URL else '<not set>'}")
 print(f"[db.py] DB_HOST={DB_HOST}  DB_PORT={DB_PORT}  DB_NAME={DB_NAME}  DB_USER={DB_USER}  "
-      f"DB_PASSWORD={'<set>' if DB_PASSWORD else '<MISSING>'}")
+      f"DB_PASSWORD={'<set>' if DB_PASSWORD else '<MISSING>'}  DB_SSLMODE={DB_SSLMODE or '<not set>'}")
 
-if not DB_PASSWORD:
-    raise RuntimeError(
-        f"DB_PASSWORD is missing. Checked .env at: {ENV_PATH} "
-        f"(exists on disk: {ENV_PATH.exists()}). "
-        f"Create backend/.env with DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD."
-    )
-if not DB_NAME or not DB_USER:
-    raise RuntimeError(
-        f"DB_NAME or DB_USER is missing from .env at: {ENV_PATH}. "
-        f"Both are required."
-    )
+if not DATABASE_URL:
+    # Only enforce the individual-var checks when we're not using a single connection string
+    if not DB_PASSWORD:
+        raise RuntimeError(
+            f"DB_PASSWORD is missing. Checked .env at: {ENV_PATH} "
+            f"(exists on disk: {ENV_PATH.exists()}). "
+            f"Create backend/.env with DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD, "
+            f"or set a single DATABASE_URL instead."
+        )
+    if not DB_NAME or not DB_USER:
+        raise RuntimeError(
+            f"DB_NAME or DB_USER is missing from .env at: {ENV_PATH}. "
+            f"Both are required (or set a single DATABASE_URL instead)."
+        )
 
 
 def get_connection():
-    """Open a new psycopg2 connection using the loaded .env config."""
-    return psycopg2.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        dbname=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD,
-    )
+    """
+    Open a new psycopg2 connection.
+
+    Uses DATABASE_URL directly if provided (the normal way hosted Postgres
+    providers like Neon give you connection info), otherwise falls back to
+    the individual DB_HOST/DB_PORT/etc vars used for local development.
+    """
+    if DATABASE_URL:
+        return psycopg2.connect(DATABASE_URL, sslmode=DB_SSLMODE or "require")
+    connect_kwargs = dict(host=DB_HOST, port=DB_PORT, dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD)
+    if DB_SSLMODE:
+        connect_kwargs["sslmode"] = DB_SSLMODE
+    return psycopg2.connect(**connect_kwargs)
 
 
 def init_db():
